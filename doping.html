@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Викторина по антидопингу</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --accent:#6366f1; --accent-2:#8b5cf6; --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --text:#0f172a; --muted:#64748b; --card:rgba(255,255,255,0.92); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(1200px 800px at 10% 10%, #312e81 0%, transparent 60%),
+                radial-gradient(1000px 700px at 90% 90%, #0e7490 0%, transparent 55%),
+                linear-gradient(135deg, #0f172a, #1e293b);
+    min-height: 100vh; display:flex; justify-content:center; align-items:center;
+    padding: 24px; color: var(--text); transition: background 0.8s ease; overflow-x:hidden;
+  }
+  body.theme-green { background: radial-gradient(1200px 800px at 10% 10%, #065f46 0%, transparent 60%), radial-gradient(1000px 700px at 90% 90%, #047857 0%, transparent 55%), linear-gradient(135deg, #022c22, #064e3b); }
+  body.theme-yellow { background: radial-gradient(1200px 800px at 10% 10%, #78350f 0%, transparent 60%), radial-gradient(1000px 700px at 90% 90%, #b45309 0%, transparent 55%), linear-gradient(135deg, #451a03, #78350f); }
+  body.theme-red { background: radial-gradient(1200px 800px at 10% 10%, #7f1d1d 0%, transparent 60%), radial-gradient(1000px 700px at 90% 90%, #991b1b 0%, transparent 55%), linear-gradient(135deg, #450a0a, #7f1d1d); }
+  body::before, body::after { content:''; position:fixed; border-radius:50%; filter:blur(80px); opacity:0.35; pointer-events:none; z-index:0; transition:background 0.8s; }
+  body::before { width:400px; height:400px; background:var(--accent); top:-120px; left:-120px; }
+  body::after { width:360px; height:360px; background:var(--accent-2); bottom:-120px; right:-120px; }
+  body.theme-green::before, body.theme-green::after { background:#34d399; }
+  body.theme-yellow::before, body.theme-yellow::after { background:#fbbf24; }
+  body.theme-red::before, body.theme-red::after { background:#f87171; }
+
+  .card {
+    position:relative; z-index:1; background:var(--card); backdrop-filter:blur(20px);
+    border-radius:24px; padding:36px 32px; max-width:640px; width:100%;
+    box-shadow:0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    border:1px solid rgba(255,255,255,0.5); transition:border 0.5s, box-shadow 0.5s;
+    animation:cardIn 0.6s cubic-bezier(0.22,1,0.36,1);
+  }
+  @keyframes cardIn { from{opacity:0; transform:translateY(24px) scale(0.98);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .card.border-green { border-color:var(--green); box-shadow:0 30px 80px rgba(16,185,129,0.35); }
+  .card.border-yellow { border-color:var(--yellow); box-shadow:0 30px 80px rgba(245,158,11,0.35); }
+  .card.border-red { border-color:var(--red); box-shadow:0 30px 80px rgba(239,68,68,0.35); }
+
+  .logo { display:flex; align-items:center; justify-content:center; width:64px; height:64px; margin:0 auto 16px; border-radius:20px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); font-size:32px; box-shadow:0 10px 30px rgba(99,102,241,0.45); animation:float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+  h1 { text-align:center; color:var(--text); font-size:26px; font-weight:800; margin-bottom:6px; letter-spacing:-0.5px; }
+  .subtitle { text-align:center; color:var(--muted); font-size:14px; margin-bottom:28px; font-weight:500; }
+
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:13px; color:#475569; margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .form-group input { width:100%; padding:14px 16px; font-size:16px; border:2px solid #e2e8f0; border-radius:14px; outline:none; transition:all 0.2s; background:#f8fafc; font-family:inherit; color:var(--text); }
+  .form-group input::placeholder { color:#94a3b8; }
+  .form-group input:focus { border-color:var(--accent); background:#fff; box-shadow:0 0 0 4px rgba(99,102,241,0.15); transform:translateY(-1px); }
+  .err-text { color:var(--red); font-size:13px; margin-top:8px; display:none; font-weight:600; padding:8px 12px; border-radius:10px; background:#fef2f2; }
+  .err-text.show { display:block; animation:shake 0.4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+  .progress-wrap { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+  .progress-bar { flex:1; height:10px; background:#e2e8f0; border-radius:999px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); width:0%; border-radius:999px; transition:width 0.4s cubic-bezier(0.22,1,0.36,1), background 0.4s; box-shadow:0 0 12px rgba(99,102,241,0.5); }
+  .progress-fill.green { background:linear-gradient(90deg,#059669,var(--green)); box-shadow:0 0 12px rgba(16,185,129,0.6); }
+  .progress-fill.yellow { background:linear-gradient(90deg,#d97706,var(--yellow)); box-shadow:0 0 12px rgba(245,158,11,0.6); }
+  .progress-fill.red { background:linear-gradient(90deg,#dc2626,var(--red)); box-shadow:0 0 12px rgba(239,68,68,0.6); }
+  .progress-count { font-size:13px; font-weight:700; color:var(--muted); min-width:48px; text-align:right; }
+
+  .emoji-big { font-size:76px; text-align:center; display:block; margin:4px 0 20px; line-height:1; animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes pop { 0%{transform:scale(0.6) rotate(-8deg); opacity:0;} 100%{transform:scale(1) rotate(0); opacity:1;} }
+  .question-text { font-size:19px; color:var(--text); margin-bottom:22px; font-weight:700; line-height:1.4; text-align:center; animation:fadeUp 0.4s ease; }
+  @keyframes fadeUp { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  .options { display:flex; flex-direction:column; gap:10px; }
+  .option { display:flex; align-items:center; gap:14px; width:100%; padding:16px 20px; border:2px solid #e2e8f0; border-radius:16px; background:#f8fafc; font-size:16px; font-weight:600; cursor:pointer; text-align:left; transition:all 0.2s cubic-bezier(0.22,1,0.36,1); font-family:inherit; color:var(--text); position:relative; overflow:hidden; }
+  .option::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(99,102,241,0.08),transparent); transform:translateX(-100%); transition:transform 0.5s; }
+  .option:hover::before { transform:translateX(100%); }
+  .option:hover { border-color:var(--accent); background:#fff; transform:translateX(4px); box-shadow:0 8px 24px rgba(99,102,241,0.15); }
+  .option .dot { width:22px; height:22px; border-radius:50%; border:2px solid #cbd5e1; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:transparent; transition:all 0.2s; }
+  .option.correct { background:#ecfdf5; border-color:var(--green); color:#065f46; }
+  .option.correct .dot { background:var(--green); border-color:var(--green); color:#fff; }
+  .option.wrong { background:#fef2f2; border-color:var(--red); color:#7f1d1d; }
+  .option.wrong .dot { background:var(--red); border-color:var(--red); color:#fff; }
+  .option:disabled { cursor:default; transform:none !important; }
+  .option:disabled:hover { box-shadow:none; }
+
+  .feedback { margin-top:18px; padding:14px 16px; border-radius:14px; font-size:15px; font-weight:500; display:none; line-height:1.5; animation:fadeUp 0.3s ease; }
+  .feedback.show { display:block; }
+  .feedback.ok { background:#ecfdf5; color:#065f46; border-left:4px solid var(--green); }
+  .feedback.bad { background:#fef2f2; color:#7f1d1d; border-left:4px solid var(--red); }
+
+  .btn { display:block; width:100%; padding:16px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; border:none; border-radius:16px; font-size:17px; font-weight:700; cursor:pointer; transition:all 0.2s cubic-bezier(0.22,1,0.36,1); font-family:inherit; margin-top:18px; box-shadow:0 10px 28px rgba(99,102,241,0.4); position:relative; overflow:hidden; }
+  .btn:hover { transform:translateY(-2px); box-shadow:0 16px 36px rgba(99,102,241,0.5); }
+  .btn:active { transform:translateY(0); }
+  .btn.secondary { background:#f1f5f9; color:#334155; box-shadow:none; margin-top:10px; }
+  .btn.secondary:hover { background:#e2e8f0; box-shadow:0 8px 20px rgba(0,0,0,0.08); }
+
+  .result { text-align:center; }
+  .score-big { font-size:72px; font-weight:800; line-height:1; margin:12px 0; letter-spacing:-3px; transition:color 0.4s; animation:pop 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+  .score-big.green { color:var(--green); }
+  .score-big.yellow { color:var(--yellow); }
+  .score-big.red { color:var(--red); }
+  .score-big small { font-size:28px; opacity:0.5; font-weight:700; }
+  .verdict { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:999px; font-weight:800; font-size:14px; margin-bottom:14px; color:#fff; letter-spacing:0.3px; animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both; }
+  .verdict.green { background:linear-gradient(135deg,#059669,var(--green)); box-shadow:0 8px 24px rgba(16,185,129,0.4); }
+  .verdict.yellow { background:linear-gradient(135deg,#d97706,var(--yellow)); box-shadow:0 8px 24px rgba(245,158,11,0.4); }
+  .verdict.red { background:linear-gradient(135deg,#dc2626,var(--red)); box-shadow:0 8px 24px rgba(239,68,68,0.4); }
+  .result .msg { font-size:16px; margin:10px 0 24px; color:var(--muted); line-height:1.5; font-weight:500; }
+  .result .msg small { font-size:13px; opacity:0.8; }
+  .send-status { text-align:center; font-size:13px; color:var(--muted); margin-top:16px; padding:10px 14px; background:#f8fafc; border-radius:12px; font-weight:500; animation:fadeUp 0.4s ease; }
+
+  .hidden { display:none; }
+  .screen { animation:fadeUp 0.4s ease; }
+  @media (max-width:480px) { .card{padding:28px 20px; border-radius:20px;} h1{font-size:22px;} .emoji-big{font-size:62px;} .question-text{font-size:17px;} .option{padding:14px 16px; font-size:15px;} .score-big{font-size:60px;} }
+</style>
+</head>
+<body>
+<div class="card" id="app">
+  <div class="logo">🏅</div>
+  <h1>Викторина по антидопингу</h1>
+  <p class="subtitle">10 простых вопросов — проверь свои знания!</p>
+
+  <!-- ===== ЭКРАН 1: АНКЕТА (показывается сразу) ===== -->
+  <div id="introArea" class="screen">
+    <div class="form-group">
+      <label>ФИО</label>
+      <input type="text" id="fio" placeholder="Иванов Иван Иванович" maxlength="100">
+    </div>
+    <div class="form-group">
+      <label>Вид спорта</label>
+      <input type="text" id="sport" placeholder="Например: плавание, футбол" maxlength="60">
+    </div>
+    <div class="form-group">
+      <label>Возраст</label>
+      <input type="number" id="age" placeholder="14" min="5" max="100">
+    </div>
+    <div class="err-text" id="introErr">Заполните все поля, чтобы начать.</div>
+    <button class="btn" onclick="startQuiz()">Начать викторину →</button>
+  </div>
+
+  <!-- ===== ЭКРАН 2: ВИКТОРИНА ===== -->
+  <div id="quizArea" class="hidden screen">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+      <div class="progress-count" id="progressCount">1 / 10</div>
+    </div>
+    <div id="questionBox"></div>
+  </div>
+
+  <!-- ===== ЭКРАН 3: РЕЗУЛЬТАТ ===== -->
+  <div id="resultArea" class="hidden screen"></div>
+</div>
+
+<script>
+/* =====================================================
+   ⚙️ НАСТРОЙКИ
+   ===================================================== */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwI7Ljt_idfeHL4PydJkxiFBR8f7EA608SpJqPn13Hu2MhKoVbF1IMn-2RR8OF_qK4Nqw/exec"; // ← сюда URL из Apps Script
+
+/* ====== ВОПРОСЫ ====== */
+const QUESTIONS = [
+  { emoji:"💊", q:"Правильно ли использовать допинг, чтобы победить любой ценой?", options:["Да, это нормально","Нет, это запрещено и опасно"], correct:1, explain:"Допинг запрещён во всём спорте: это нечестно и вредно для здоровья." },
+  { emoji:"🏃", q:"Можно ли принимать запрещённые препараты, если тренер сказал «надо»?", options:["Да, тренеру виднее","Нет, ответственность на спортсмене"], correct:1, explain:"Спортсмен всегда сам отвечает за то, что попадает в его организм." },
+  { emoji:"🍊", q:"Витамины и обычные продукты питания — это допинг?", options:["Да","Нет"], correct:1, explain:"Обычная еда и витамины — не допинг. Запрещены только конкретные вещества из списка." },
+  { emoji:"💉", q:"Спортсмену предлагают «укол для силы» без названия. Что делать?", options:["Согласиться, раз предлагают","Отказаться и сообщить врачу/тренеру"], correct:1, explain:"Неизвестные препараты — большой риск. Всегда проверяй вещество у врача." },
+  { emoji:"🔍", q:"Можно ли проверить лекарство на запрещённые вещества?", options:["Да, существуют базы и приложения","Нет, это невозможно"], correct:0, explain:"Есть официальные базы (например, WADA) и приложения для проверки препаратов." },
+  { emoji:"🚫", q:"Допинг — это только «химия» для накачки мышц?", options:["Да, только стероиды","Нет, есть много разных запрещённых веществ"], correct:1, explain:"Запрещены и стимуляторы, и маскирующие средства, и некоторые методы (например, переливание крови)." },
+  { emoji:"🏆", q:"Победа с помощью допинга — это честная победа?", options:["Да, главное результат","Нет, это обман и нарушение правил"], correct:1, explain:"Спорт — это честная борьба. Допинг лишает победу смысла." },
+  { emoji:"🧪", q:"Обязан ли спортсмен сдавать допинг-пробы?", options:["Да, если участвует в соревнованиях","Нет, это только по желанию"], correct:0, explain:"Спортсмены обязаны проходить допинг-контроль — это часть правил соревнований." },
+  { emoji:"😱", q:"Допинг может навредить здоровью?", options:["Нет, он безопасен","Да, иногда очень сильно"], correct:1, explain:"Допинг вызывает серьёзные проблемы: сердце, печень, психика, гормоны." },
+  { emoji:"🛑", q:"Что делать, если тебе предложили допинг?", options:["Взять и никому не говорить","Отказаться и сообщить взрослым/официальным лицам"], correct:1, explain:"Отказ и сообщение — правильный шаг. Это защищает тебя и спорт." }
+];
+
+const THRESHOLDS = { green: 2, yellow: 4 };
+function getLevel(wrongCount) {
+  if (wrongCount <= THRESHOLDS.green) return 'green';
+  if (wrongCount <= THRESHOLDS.yellow) return 'yellow';
+  return 'red';
+}
+
+let user = { fio:'', sport:'', age:'' };
+let current = 0;
+let score = 0;
+const answers = [];
+
+const introArea = document.getElementById('introArea');
+const quizArea = document.getElementById('quizArea');
+const resultArea = document.getElementById('resultArea');
+const progress = document.getElementById('progress');
+const progressCount = document.getElementById('progressCount');
+const appCard = document.getElementById('app');
+const questionBox = document.getElementById('questionBox');
+
+/* ====== СТАРТ ВИКТОРИНЫ ====== */
+function startQuiz() {
+  const fio = document.getElementById('fio').value.trim();
+  const sport = document.getElementById('sport').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const err = document.getElementById('introErr');
+
+  if (!fio || !sport || !age) { err.textContent='Заполните все поля, чтобы начать.'; err.classList.add('show'); return; }
+  if (+age < 5 || +age > 100) { err.textContent='Укажите корректный возраст (5–100).'; err.classList.add('show'); return; }
+
+  err.classList.remove('show');
+  user = { fio, sport, age };
+  introArea.classList.add('hidden');
+  quizArea.classList.remove('hidden');
+  renderQuestion();
+}
+
+/* ====== ПРОГРЕСС ====== */
+function updateProgressColor() {
+  const wrong = answers.filter(a => a.chosen !== a.correct).length;
+  progress.classList.remove('green','yellow','red');
+  progress.classList.add(getLevel(wrong));
+}
+
+/* ====== ВОПРОС ====== */
+function renderQuestion() {
+  const q = QUESTIONS[current];
+  progress.style.width = (current / QUESTIONS.length * 100) + '%';
+  progressCount.textContent = (current + 1) + ' / ' + QUESTIONS.length;
+  updateProgressColor();
+
+  questionBox.innerHTML = `
+    <span class="emoji-big">${q.emoji}</span>
+    <div class="question-text">${current + 1}. ${q.q}</div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn hidden" id="nextBtn">Дальше →</button>
+  `;
+  const optsBox = document.getElementById('options');
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="dot">${i === q.correct ? '✓' : ''}</span><span>${opt}</span>`;
+    btn.onclick = () => chooseAnswer(i);
+    optsBox.appendChild(btn);
+  });
+}
+
+function chooseAnswer(i) {
+  const q = QUESTIONS[current];
+  document.querySelectorAll('.option').forEach((b, idx) => {
+    b.disabled = true;
+    if (idx === q.correct) b.classList.add('correct');
+    if (idx === i && i !== q.correct) b.classList.add('wrong');
+  });
+  const isCorrect = i === q.correct;
+  if (isCorrect) score++;
+  answers.push({ qIndex: current, chosen: i, correct: q.correct });
+  updateProgressColor();
+
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show', isCorrect ? 'ok' : 'bad');
+  fb.textContent = (isCorrect ? '✅ Верно! ' : '❌ Не совсем. ') + q.explain;
+
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.classList.remove('hidden');
+  nextBtn.textContent = current === QUESTIONS.length - 1 ? 'Показать результат' : 'Дальше →';
+  nextBtn.onclick = () => {
+    current++;
+    if (current < QUESTIONS.length) renderQuestion();
+    else showResult();
+  };
+}
+
+/* ====== РЕЗУЛЬТАТ ====== */
+function showResult() {
+  progress.style.width = '100%';
+  progressCount.textContent = QUESTIONS.length + ' / ' + QUESTIONS.length;
+  quizArea.classList.add('hidden');
+  resultArea.classList.remove('hidden');
+
+  const wrong = QUESTIONS.length - score;
+  const level = getLevel(wrong);
+  const percent = Math.round(score / QUESTIONS.length * 100);
+
+  document.body.classList.remove('theme-green','theme-yellow','theme-red');
+  document.body.classList.add('theme-' + level);
+  appCard.classList.remove('border-green','border-yellow','border-red');
+  appCard.classList.add('border-' + level);
+
+  const verdicts = {
+    green: { emoji:'🎉', badge:'🟢 ОТЛИЧНО', msg:'Отличный результат! Ты знаешь правила антидопинга.' },
+    yellow:{ emoji:'👍', badge:'🟡 ХОРОШО', msg:'Неплохо! Есть пара ошибок — повтори материал.' },
+    red:   { emoji:'📚', badge:'🔴 НУЖНО ПОВТОРИТЬ', msg:'Много ошибок — стоит внимательно изучить правила.' }
+  };
+  const v = verdicts[level];
+
+  resultArea.innerHTML = `
+    <div class="result">
+      <span class="emoji-big">${v.emoji}</span>
+      <div class="score-big ${level}">${score}<small> / ${QUESTIONS.length}</small></div>
+      <div class="verdict ${level}">${v.badge}</div>
+      <div class="msg">${v.msg}<br><small>Правильных: ${score} из ${QUESTIONS.length} (${percent}%) · Ошибок: ${wrong}</small></div>
+      <div class="send-status" id="sendStatus">⏳ Отправляем результат…</div>
+    </div>
+    <button class="btn secondary" onclick="location.reload()">🔄 Пройти ещё раз</button>
+  `;
+  sendResult({ score, wrong, level, percent });
+}
+
+/* ====== ОТПРАВКА (всегда) ====== */
+function sendResult({ score, wrong, level, percent }) {
+  const status = document.getElementById('sendStatus');
+  const payload = {
+    fio: user.fio, sport: user.sport, age: user.age,
+    score, total: QUESTIONS.length, wrong, level, percent,
+    answers: answers.map(a => `${a.qIndex+1}:${a.chosen === a.correct ? '✓' : '✗'}`).join(', ')
+  };
+  const localRecord = { ...payload, date: new Date().toISOString(), sent: false };
+  saveLocalRecord(localRecord);
+
+  if (!SCRIPT_URL || SCRIPT_URL.indexOf('ВСТАВЬ') === 0) {
+    status.textContent = 'ℹ️ Результат сохранён локально (URL таблицы не настроен).';
+    status.style.color = '#e6a700';
+    return;
+  }
+  status.textContent = '⏳ Отправляем результат…';
+  status.style.color = '#64748b';
+
+  fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) })
+  .then(() => {
+    markLocalSent(localRecord);
+    status.textContent = '✅ Результат отправлен.';
+    status.style.color = '#10b981';
+    console.log('Отправлено:', payload);
+  })
+  .catch((err) => {
+    status.textContent = '⚠️ Не удалось отправить, результат сохранён локально.';
+    status.style.color = '#ef4444';
+    console.error('Ошибка отправки:', err);
+  });
+}
+
+/* ====== ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ====== */
+function saveLocalRecord(record) {
+  try { const arr = JSON.parse(localStorage.getItem('antidoping_results') || '[]'); arr.push(record); localStorage.setItem('antidoping_results', JSON.stringify(arr)); } catch(_) {}
+}
+function markLocalSent(record) {
+  try {
+    const arr = JSON.parse(localStorage.getItem('antidoping_results') || '[]');
+    for (let i = arr.length - 1; i >= 0; i--) {
+      if (!arr[i].sent && arr[i].score === record.score && arr[i].fio === record.fio) { arr[i].sent = true; break; }
+    }
+    localStorage.setItem('antidoping_results', JSON.stringify(arr));
+  } catch(_) {}
+}
+</script>
+</body>
+</html>
